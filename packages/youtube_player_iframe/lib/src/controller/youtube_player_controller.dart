@@ -619,6 +619,11 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
     }
   }
 
+  Function() onYoutubeTap = () {};
+  void setYoutubeTap(Function() onTap) {
+    onYoutubeTap = onTap;
+  }
+
   /// The stream for [YoutubeVideoState] changes.
   Stream<YoutubeVideoState> get videoStateStream {
     return _eventHandler.videoStateController.stream;
