@@ -117,11 +117,11 @@ class YoutubePlayerEventHandler {
   }
 
   void onHeaderButtonPressed(Object data) {
-    controller.onYoutubeTap.call();
+    controller.onYoutubeTap.call(data);
   }
 
   void onYoutubeButtonPressed(Object data) {
-    controller.onYoutubeTap.call();
+    controller.onYoutubeTap.call(data);
   }
 
   /// This event fires if an error occurs in the player.

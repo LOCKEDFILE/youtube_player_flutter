@@ -619,8 +619,8 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
     }
   }
 
-  Function() onYoutubeTap = () {};
-  void setYoutubeTap(Function() onTap) {
+  Function(Object obj) onYoutubeTap = (obj) {};
+  void setYoutubeTap(Function(Object obj) onTap) {
     onYoutubeTap = onTap;
   }
 

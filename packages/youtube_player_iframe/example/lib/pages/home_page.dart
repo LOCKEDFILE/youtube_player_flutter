@@ -58,13 +58,16 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
+    _controller.setYoutubeTap((obj) {
+      print('???: $obj');
+    });
     if (widget.videoId != null) {
       _controller.loadVideoById(videoId: widget.videoId!);
     } else {
       _controller.loadPlaylist(
         list: _videoIds,
         listType: ListType.playlist,
-        startSeconds: 136,
+        startSeconds: 0,
       );
     }
   }
