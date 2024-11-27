@@ -73,6 +73,7 @@
                   sendMessage('VideoState', JSON.stringify(state));
                 }, 100);
               }
+              getVideoSize();
             },
             onPlaybackQualityChange: function (event) {
               sendMessage('PlaybackQualityChange', event.data);
@@ -158,11 +159,32 @@
         return JSON.stringify(data);
       }
 
+      function getVideoSize(){
+        var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
+        const videoElement = ytFrame.querySelector('video');
+        if (videoElement) {
+          // 실제 영상의 너비와 높이
+          const videoWidth = videoElement.videoWidth;
+          const videoHeight = videoElement.videoHeight;
+        
+          // 비율 계산
+          const aspectRatio = videoWidth / videoHeight;
+          sendMessage('AspectRatio', {'width':videoWidth , 'height':videoHeight, 'aspectRatio':aspectRatio});
+          // console.log('실제 비율: ${aspectRatio.toFixed(2)} (가로:${videoWidth}, 세로:${videoHeight})');
+        }
+      }
+
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {
           var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
           var fsButton = ytFrame.getElementsByClassName('ytp-fullscreen-button ytp-button')[0];
           var youtubeButton = ytFrame.getElementsByClassName('ytp-youtube-button ytp-button yt-uix-sessionlink')[0];
+          
+
+          
+
+    
+          
           
           if(fsButton != null) {
             var fsButtonCopy = fsButton.cloneNode(true);

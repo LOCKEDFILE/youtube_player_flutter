@@ -121,6 +121,8 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
   /// The [YoutubePlayerValue].
   YoutubePlayerValue get value => _value;
 
+  double? aspectRatio;
+
   @override
   Future<void> cuePlaylist({
     required List<String> list,
