@@ -51,6 +51,10 @@
       var player;
       var timerId;
 
+      var hideClassNames = <<hideClassNames>>;                // 예: ["ytmSlimMetadataButtonRendererHost", ...]
+      var disableClickClassNames = <<disableClickClassNames>>; // 예: ["ytmVideoInfoHost", ...]
+
+
       function onYouTubeIframeAPIReady() {
         player = new YT.Player("<<playerId>>", {
           host: host,
@@ -177,38 +181,66 @@
       function injectHideStyle(ytDoc) {
         try {
           var style = ytDoc.createElement('style');
-          style.textContent = `
-            .ytmSlimMetadataButtonRendererHost,
-            .fullscreen-more-videos-endpoint,
-            .ytmPaidContentOverlayHost {
+        
+          var selectors = [];
+        
+          // Dart에서 배열을 넘겨준 경우
+          if (Array.isArray(hideClassNames) && hideClassNames.length > 0) {
+            selectors = hideClassNames.map(function (name) {
+              return '.' + name;
+            });
+          } else {
+            // 혹시 Dart에서 아무것도 안 넘기면 기본값 (지금 쓰시던 것)
+            selectors = [
+              '.ytmSlimMetadataButtonRendererHost',
+              '.fullscreen-more-videos-endpoint',
+              '.ytmPaidContentOverlayHost',
+            ];
+          }
+         
+          style.textContent =
+            selectors.join(',\n') +
+            ` {
               display: none !important;
               visibility: hidden !important;
               pointer-events: none !important;
-            }
-          `;
+            }`;
+         
           ytDoc.head.appendChild(style);
         } catch (e) {}
       }
 
+
       function injectDisableClickStyle(ytDoc) {
         try {
           var style = ytDoc.createElement('style');
-          style.textContent = `
-            /* 좌측 상단 author / 채널 영역 */
-            .ytmVideoInfoHost {
-              pointer-events: none !important;
-            }
         
-            /* 우측 하단 유튜브 버튼 */
-            .ytSpecButtonViewModelHost {
+          var selectors = [];
+        
+          if (Array.isArray(disableClickClassNames) && disableClickClassNames.length > 0) {
+            selectors = disableClickClassNames.map(function (name) {
+              return '.' + name;
+            });
+          } else {
+            // 기본값: 지금 쓰고 계신 두 개
+            selectors = [
+              '.ytmVideoInfoHost',
+              '.ytSpecButtonViewModelHost',
+            ];
+          }
+        
+          style.textContent =
+            selectors.join(',\n') +
+            ` {
               pointer-events: none !important;
-            }
-          `;
+            }`;
+        
           ytDoc.head.appendChild(style);
         } catch (e) {
           // 접근 실패하면 조용히 무시
         }
-     }
+      }
+
 
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {

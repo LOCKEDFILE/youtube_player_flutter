@@ -110,6 +110,9 @@ class YoutubePlayerParams {
   /// The user agent for the player.
   final String? userAgent;
 
+  final List<String>? hideClassNames;
+  final List<String>? disableClickClassNames;
+
   /// Defines player parameters for the youtube player.
   const YoutubePlayerParams({
     this.mute = false,
@@ -128,6 +131,8 @@ class YoutubePlayerParams {
     this.playsInline = true,
     this.strictRelatedVideos = false,
     this.userAgent,
+    this.hideClassNames,
+    this.disableClickClassNames,
   });
 
   /// Creates [Map] representation of [YoutubePlayerParams].

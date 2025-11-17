@@ -279,6 +279,8 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
       'playerVars': params.toJson(),
       'platform': platform,
       'host': params.origin ?? 'https://www.youtube.com',
+      'hideClassNames': jsonEncode(params.hideClassNames ?? []),
+      'disableClickClassNames': jsonEncode(params.disableClickClassNames ?? []),
     };
 
     await webViewController.loadHtmlString(
