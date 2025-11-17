@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 const List<String> _videoIds = [
-  'j4lDDQTKN8s',
+  'TAdnVrc-Qu0',
   'bmgia-h1qNg',
   'Cohbiz2lOQI',
   'CoNgsfBbxJk',
@@ -37,7 +37,10 @@ class _VideoListPageState extends State<VideoListPage> {
         final controller = YoutubePlayerController.fromVideoId(
           videoId: _videoIds[index],
           autoPlay: false,
-          params: const YoutubePlayerParams(showFullscreenButton: true),
+          params: const YoutubePlayerParams(
+            showFullscreenButton: true,
+            origin: 'https://www.youtube-nocookie.com',
+          ),
         );
         controller.setFullScreenListener(
           (_) async {

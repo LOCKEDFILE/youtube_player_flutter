@@ -14,7 +14,8 @@ import 'package:youtube_player_iframe_example/widgets/player_state_section.dart'
 import 'package:youtube_player_iframe_example/widgets/source_input_section.dart';
 
 const List<String> _videoIds = [
-  'tcodrIK2P_I',
+  'itycqE5WOBc',
+  'TAdnVrc-Qu0',
   'H5v3kku4y6Q',
   'nPt8bK2gbaU',
   'K18cpp_-gP8',
@@ -49,6 +50,7 @@ class _HomePageState extends State<HomePage> {
         mute: false,
         showFullscreenButton: true,
         loop: false,
+        origin: 'https://www.youtube-nocookie.com',
       ),
     );
 
