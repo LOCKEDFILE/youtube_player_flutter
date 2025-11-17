@@ -174,13 +174,48 @@
         }
       }
 
+      function injectHideStyle(ytDoc) {
+        try {
+          var style = ytDoc.createElement('style');
+          style.textContent = `
+            .ytmSlimMetadataButtonRendererHost,
+            .fullscreen-more-videos-endpoint {
+              display: none !important;
+              visibility: hidden !important;
+              pointer-events: none !important;
+            }
+          `;
+          ytDoc.head.appendChild(style);
+        } catch (e) {}
+      }
+
+      function injectDisableClickStyle(ytDoc) {
+        try {
+          var style = ytDoc.createElement('style');
+          style.textContent = `
+            /* 좌측 상단 author / 채널 영역 */
+            .ytmVideoInfoHost {
+              pointer-events: none !important;
+            }
+        
+            /* 우측 하단 유튜브 버튼 */
+            .ytSpecButtonViewModelHost {
+              pointer-events: none !important;
+            }
+          `;
+          ytDoc.head.appendChild(style);
+        } catch (e) {
+          // 접근 실패하면 조용히 무시
+        }
+     }
+
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {
           var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
           var fsButton = ytFrame.getElementsByClassName('ytp-fullscreen-button ytp-button')[0];
           var youtubeButton = ytFrame.getElementsByClassName('ytp-youtube-button ytp-button yt-uix-sessionlink')[0];
-          
-
+          injectDisableClickStyle(ytFrame);
+          injectHideStyle(ytFrame);
           
 
     
