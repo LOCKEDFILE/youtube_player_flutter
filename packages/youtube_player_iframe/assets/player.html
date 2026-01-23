@@ -11,6 +11,8 @@
         height: 100%;
         background-color: black;
         pointer-events: <<pointerEvents>>;
+        overscroll-behavior: none; /* iOS 버전에 따라 무시될 수 있음 */
+        touch-action: none;        /* iOS에선 기대만큼 안 먹는 경우가 많음 */
       }
 
       body {
@@ -19,6 +21,8 @@
         height: 100%;
         background-color: black;
         pointer-events: inherit;
+        overscroll-behavior: none; /* iOS 버전에 따라 무시될 수 있음 */
+        touch-action: none;        /* iOS에선 기대만큼 안 먹는 경우가 많음 */
       }
 
       .embed-container iframe,
