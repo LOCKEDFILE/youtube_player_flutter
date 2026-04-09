@@ -282,6 +282,17 @@
       }
 
 
+      function readFullscreenState(ytDoc) {
+        var videoElement = ytDoc.querySelector('video');
+
+        return !!(
+          ytDoc.fullscreenElement ||
+          ytDoc.webkitFullscreenElement ||
+          (videoElement && videoElement.webkitDisplayingFullscreen)
+        );
+      }
+
+
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {
           var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
@@ -302,7 +313,7 @@
                 target.closest('.ytp-fullscreen-exit-icon')
               )
             ) {
-              sendMessage('FullscreenButtonPressed', '');
+              sendMessage('FullscreenChanged', !readFullscreenState(ytFrame));
             }
           }, true);
           

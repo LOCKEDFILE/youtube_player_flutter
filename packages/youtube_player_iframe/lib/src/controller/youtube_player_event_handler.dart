@@ -116,7 +116,7 @@ class YoutubePlayerEventHandler {
 
   /// This event is fired to indicate that the fullscreen button was clicked.
   void onFullscreenButtonPressed(Object data) {
-    controller.toggleFullScreen();
+    // Legacy no-op. Fullscreen state is driven by FullscreenChanged events.
   }
 
   /// This event is fired when the iframe/video reports fullscreen state changes.
