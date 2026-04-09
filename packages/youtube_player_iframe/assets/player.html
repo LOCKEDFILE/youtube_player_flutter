@@ -54,6 +54,7 @@
       var host = "<<host>>";
       var player;
       var timerId;
+      var lastFullscreenState = null;
 
       var hideClassNames = <<hideClassNames>>;                // 예: ["ytmSlimMetadataButtonRendererHost", ...]
       var disableClickClassNames = <<disableClickClassNames>>; // 예: ["ytmVideoInfoHost", ...]
@@ -98,9 +99,6 @@
             },
             onAutoplayBlocked: function (event) {
               sendMessage('AutoplayBlocked', event.data);
-            },
-            onFullscreenChange: function (event) {
-              sendMessage('FullscreenChanged', event.data);
             },
           },
         });
@@ -255,16 +253,11 @@
           ytDoc.__ytFullscreenStateBound = true;
 
           var emitFullscreenState = function (enabled) {
+            enabled = !!enabled;
+            if (lastFullscreenState === enabled) return;
+            lastFullscreenState = enabled;
             sendMessage('FullscreenChanged', enabled);
           };
-
-          ytDoc.addEventListener('fullscreenchange', function () {
-            emitFullscreenState(!!ytDoc.fullscreenElement);
-          });
-
-          ytDoc.addEventListener('webkitfullscreenchange', function () {
-            emitFullscreenState(!!ytDoc.webkitFullscreenElement);
-          });
 
           var videoElement = ytDoc.querySelector('video');
           if (videoElement != null) {
@@ -313,7 +306,11 @@
                 target.closest('.ytp-fullscreen-exit-icon')
               )
             ) {
-              sendMessage('FullscreenChanged', !readFullscreenState(ytFrame));
+              if (lastFullscreenState === null) {
+                lastFullscreenState = readFullscreenState(ytFrame);
+              }
+              sendMessage('FullscreenChanged', !lastFullscreenState);
+              lastFullscreenState = !lastFullscreenState;
             }
           }, true);
           

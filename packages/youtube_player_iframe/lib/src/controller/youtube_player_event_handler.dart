@@ -17,7 +17,6 @@ class YoutubePlayerEventHandler {
       'PlaybackRateChange': onPlaybackRateChange,
       'PlayerError': onError,
       'FullscreenChanged': onFullscreenChanged,
-      'FullscreenChange': onFullscreenChanged,
       'FullscreenButtonPressed': onFullscreenButtonPressed,
       'VideoState': onVideoState,
       'AutoplayBlocked': onAutoplayBlocked,
