@@ -363,6 +363,8 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
       error: error ?? value.error,
       metaData: metaData ?? value.metaData,
     );
+    // Keep controller state in sync even when nobody subscribed via `listen`.
+    _value = updatedValue;
     _valueController.add(updatedValue);
   }
 
