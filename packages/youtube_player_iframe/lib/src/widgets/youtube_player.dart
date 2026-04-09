@@ -10,6 +10,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:youtube_player_iframe/src/widgets/fullscreen_youtube_player.dart';
 
 import '../controller/youtube_player_controller.dart';
+import '../player_value.dart';
 
 /// A widget to play or stream Youtube Videos.
 ///
@@ -110,13 +111,36 @@ class _YoutubePlayerState extends State<YoutubePlayer>
       );
     }
 
-    return OrientationBuilder(
+    final content = OrientationBuilder(
       builder: (context, orientation) {
         return AspectRatio(
           aspectRatio: orientation == Orientation.landscape
               ? MediaQuery.of(context).size.aspectRatio
               : widget.aspectRatio,
           child: player,
+        );
+      },
+    );
+
+    if (kIsWeb) return content;
+
+    return StreamBuilder<YoutubePlayerValue>(
+      stream: _controller.stream,
+      initialData: _controller.value,
+      builder: (context, snapshot) {
+        final isFullScreen =
+            snapshot.data?.fullScreenOption.enabled ?? false;
+
+        return PopScope(
+          canPop: !isFullScreen,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+
+            if (isFullScreen) {
+              _controller.exitFullScreen();
+            }
+          },
+          child: content,
         );
       },
     );
