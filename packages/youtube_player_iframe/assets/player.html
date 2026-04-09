@@ -55,6 +55,8 @@
       var player;
       var timerId;
       var lastFullscreenState = null;
+      var fullscreenStateMonitorId = null;
+      var fullscreenStateMonitorBound = false;
 
       var hideClassNames = <<hideClassNames>>;                // 예: ["ytmSlimMetadataButtonRendererHost", ...]
       var disableClickClassNames = <<disableClickClassNames>>; // 예: ["ytmVideoInfoHost", ...]
@@ -149,6 +151,19 @@
          var messageString = JSON.stringify(message);
 
          sendPlatformMessage(messageString);
+      }
+
+      function emitFullscreenState(enabled) {
+        enabled = !!enabled;
+        if (lastFullscreenState === enabled) return;
+
+        lastFullscreenState = enabled;
+        if (enabled) {
+          startFullscreenStateMonitor();
+        } else {
+          stopFullscreenStateMonitor();
+        }
+        sendMessage('FullscreenChanged', enabled);
       }
 
       function getVideoData() {
@@ -252,13 +267,6 @@
           if (ytDoc.__ytFullscreenStateBound) return;
           ytDoc.__ytFullscreenStateBound = true;
 
-          var emitFullscreenState = function (enabled) {
-            enabled = !!enabled;
-            if (lastFullscreenState === enabled) return;
-            lastFullscreenState = enabled;
-            sendMessage('FullscreenChanged', enabled);
-          };
-
           var videoElement = ytDoc.querySelector('video');
           if (videoElement != null) {
             videoElement.addEventListener('webkitbeginfullscreen', function () {
@@ -286,6 +294,50 @@
       }
 
 
+      function attachFullscreenStateMonitor(ytDoc) {
+        try {
+          if (fullscreenStateMonitorBound) return;
+          fullscreenStateMonitorBound = true;
+
+          window.addEventListener('resize', function () {
+            if (fullscreenStateMonitorId == null) return;
+            emitFullscreenState(readFullscreenState(ytDoc));
+          });
+
+          document.addEventListener('visibilitychange', function () {
+            if (fullscreenStateMonitorId == null) return;
+            emitFullscreenState(readFullscreenState(ytDoc));
+          });
+        } catch (e) {
+          // 접근 실패하면 조용히 무시
+        }
+      }
+
+
+      function startFullscreenStateMonitor() {
+        if (fullscreenStateMonitorId != null) return;
+
+        fullscreenStateMonitorId = setInterval(function () {
+          var ytFrame = document.getElementsByTagName('iframe')[0];
+          if (!ytFrame || !ytFrame.contentWindow) return;
+
+          try {
+            emitFullscreenState(readFullscreenState(ytFrame.contentWindow.document));
+          } catch (e) {
+            // 접근 실패하면 조용히 무시
+          }
+        }, 250);
+      }
+
+
+      function stopFullscreenStateMonitor() {
+        if (fullscreenStateMonitorId == null) return;
+
+        clearInterval(fullscreenStateMonitorId);
+        fullscreenStateMonitorId = null;
+      }
+
+
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {
           var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
@@ -293,6 +345,11 @@
           injectDisableClickStyle(ytFrame);
           injectHideStyle(ytFrame);
           attachFullscreenStateListeners(ytFrame);
+          attachFullscreenStateMonitor(ytFrame);
+
+          if (lastFullscreenState === null) {
+            lastFullscreenState = readFullscreenState(ytFrame);
+          }
 
           ytFrame.addEventListener('click', function(event) {
             var target = event.target;
@@ -306,11 +363,7 @@
                 target.closest('.ytp-fullscreen-exit-icon')
               )
             ) {
-              if (lastFullscreenState === null) {
-                lastFullscreenState = readFullscreenState(ytFrame);
-              }
-              sendMessage('FullscreenChanged', !lastFullscreenState);
-              lastFullscreenState = !lastFullscreenState;
+              emitFullscreenState(!lastFullscreenState);
             }
           }, true);
           
