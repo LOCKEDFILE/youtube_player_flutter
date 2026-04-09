@@ -100,7 +100,7 @@
               sendMessage('AutoplayBlocked', event.data);
             },
             onFullscreenChange: function (event) {
-              sendMessage('FullscreenChange', event.data);
+              sendMessage('FullscreenChanged', event.data);
             },
           },
         });
@@ -292,7 +292,16 @@
 
           ytFrame.addEventListener('click', function(event) {
             var target = event.target;
-            if (target && typeof target.closest === 'function' && target.closest('.fullscreen-icon')) {
+            if (
+              target &&
+              typeof target.closest === 'function' &&
+              (
+                target.closest('.ytp-fullscreen-button') ||
+                target.closest('.fullscreen-icon') ||
+                target.closest('.ytp-fullscreen-icon') ||
+                target.closest('.ytp-fullscreen-exit-icon')
+              )
+            ) {
               sendMessage('FullscreenButtonPressed', '');
             }
           }, true);
