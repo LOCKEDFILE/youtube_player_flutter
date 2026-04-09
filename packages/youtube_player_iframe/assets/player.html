@@ -308,6 +308,112 @@
       }
 
 
+      function getFullscreenButton(ytDoc) {
+        return ytDoc.querySelector(
+          '.ytp-fullscreen-button, .icon-button.fullscreen-icon, .fullscreen-icon'
+        );
+      }
+
+
+      function inferFullscreenStateFromButton(ytDoc) {
+        var button = getFullscreenButton(ytDoc);
+        if (!button) return null;
+
+        var classText = [button.className || '', button.innerHTML || '']
+          .join(' ')
+          .toLowerCase();
+
+        if (
+          classText.indexOf('fullscreen-exit') >= 0 ||
+          classText.indexOf('exit-icon') >= 0
+        ) {
+          return true;
+        }
+
+        if (classText.indexOf('fullscreen-icon') >= 0) {
+          return false;
+        }
+
+        var labelText = [
+          button.getAttribute('title') || '',
+          button.getAttribute('aria-label') || '',
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        if (
+          labelText.indexOf('exit fullscreen') >= 0 ||
+          labelText.indexOf('exit full screen') >= 0 ||
+          labelText.indexOf('전체화면 종료') >= 0
+        ) {
+          return true;
+        }
+
+        if (
+          labelText.indexOf('fullscreen') >= 0 ||
+          labelText.indexOf('full screen') >= 0 ||
+          labelText.indexOf('전체화면') >= 0
+        ) {
+          return false;
+        }
+
+        return null;
+      }
+
+
+      function attachFullscreenButtonObserver(ytDoc) {
+        try {
+          if (ytDoc.__ytFullscreenButtonObserverBound) return;
+          ytDoc.__ytFullscreenButtonObserverBound = true;
+
+          var buttonObserver = null;
+
+          var syncFromButton = function () {
+            var inferredState = inferFullscreenStateFromButton(ytDoc);
+            if (inferredState !== null) {
+              emitFullscreenState(inferredState);
+            }
+          };
+
+          var observeButton = function () {
+            var button = getFullscreenButton(ytDoc);
+            if (!button || ytDoc.__ytObservedFullscreenButton === button) {
+              syncFromButton();
+              return;
+            }
+
+            ytDoc.__ytObservedFullscreenButton = button;
+
+            if (buttonObserver != null) {
+              buttonObserver.disconnect();
+            }
+
+            buttonObserver = new MutationObserver(syncFromButton);
+            buttonObserver.observe(button, {
+              subtree: true,
+              childList: true,
+              attributes: true,
+              attributeFilter: ['class', 'title', 'aria-label'],
+            });
+
+            syncFromButton();
+          };
+
+          var rootObserver = new MutationObserver(observeButton);
+          rootObserver.observe(ytDoc.body, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['class', 'title', 'aria-label'],
+          });
+
+          observeButton();
+        } catch (e) {
+          // 접근 실패하면 조용히 무시
+        }
+      }
+
+
       function attachFullscreenStateMonitor(ytDoc) {
         try {
           if (fullscreenStateMonitorBound) return;
@@ -358,28 +464,33 @@
           var youtubeButton = ytFrame.getElementsByClassName('ytp-youtube-button ytp-button yt-uix-sessionlink')[0];
           injectDisableClickStyle(ytFrame);
           injectHideStyle(ytFrame);
-          attachFullscreenStateListeners(ytFrame);
-          attachFullscreenStateMonitor(ytFrame);
 
-          if (lastFullscreenState === null) {
-            lastFullscreenState = readFullscreenState(ytFrame);
-          }
+          if (platform != 'android') {
+            attachFullscreenStateListeners(ytFrame);
+            attachFullscreenStateMonitor(ytFrame);
 
-          ytFrame.addEventListener('click', function(event) {
-            var target = event.target;
-            if (
-              target &&
-              typeof target.closest === 'function' &&
-              (
-                target.closest('.ytp-fullscreen-button') ||
-                target.closest('.fullscreen-icon') ||
-                target.closest('.ytp-fullscreen-icon') ||
-                target.closest('.ytp-fullscreen-exit-icon')
-              )
-            ) {
-              emitFullscreenState(!lastFullscreenState);
+            if (lastFullscreenState === null) {
+              lastFullscreenState = readFullscreenState(ytFrame);
             }
-          }, true);
+
+            attachFullscreenButtonObserver(ytFrame);
+
+            ytFrame.addEventListener('click', function(event) {
+              var target = event.target;
+              if (
+                target &&
+                typeof target.closest === 'function' &&
+                (
+                  target.closest('.ytp-fullscreen-button') ||
+                  target.closest('.fullscreen-icon') ||
+                  target.closest('.ytp-fullscreen-icon') ||
+                  target.closest('.ytp-fullscreen-exit-icon')
+                )
+              ) {
+                emitFullscreenState(!lastFullscreenState);
+              }
+            }, true);
+          }
           
 
     

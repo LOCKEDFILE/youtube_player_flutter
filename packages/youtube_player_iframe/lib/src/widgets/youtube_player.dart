@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // Copyright 2022 Sarbagya Dhaubanjar. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -7,6 +9,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:youtube_player_iframe/src/widgets/fullscreen_youtube_player.dart';
 
 import '../controller/youtube_player_controller.dart';
@@ -75,13 +78,14 @@ class YoutubePlayer extends StatefulWidget {
 }
 
 class _YoutubePlayerState extends State<YoutubePlayer>
-    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+    with AutomaticKeepAliveClientMixin {
   late final YoutubePlayerController _controller;
+  bool _isShowingAndroidFullscreenWidget = false;
+  bool _isClosingAndroidFullscreenWidget = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _controller = widget.controller;
 
     _initPlayer();
@@ -100,10 +104,7 @@ class _YoutubePlayerState extends State<YoutubePlayer>
   Widget build(BuildContext context) {
     super.build(context);
 
-    Widget player = WebViewWidget(
-      controller: _controller.webViewController,
-      gestureRecognizers: widget.gestureRecognizers,
-    );
+    Widget player = _buildWebViewWidget(context);
 
     if (widget.enableFullScreenOnVerticalDrag) {
       player = GestureDetector(
@@ -147,6 +148,25 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     );
   }
 
+  Widget _buildWebViewWidget(BuildContext context) {
+    PlatformWebViewWidgetCreationParams params =
+        PlatformWebViewWidgetCreationParams(
+      controller: _controller.webViewController.platform,
+      layoutDirection: Directionality.of(context),
+      gestureRecognizers: widget.gestureRecognizers,
+    );
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      params = AndroidWebViewWidgetCreationParams
+          .fromPlatformWebViewWidgetCreationParams(
+        params,
+        displayWithHybridComposition: true,
+      );
+    }
+
+    return WebViewWidget.fromPlatformCreationParams(params: params);
+  }
+
   void _fullscreenGesture(DragUpdateDetails details) {
     final delta = details.delta.dy;
 
@@ -163,33 +183,83 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     _controller.webViewController.setBackgroundColor(bgColor);
   }
 
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-
-    if (defaultTargetPlatform != TargetPlatform.android) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_controller.value.fullScreenOption.enabled) return;
-
-      final orientation = MediaQuery.orientationOf(context);
-      if (orientation == Orientation.portrait) {
-        _controller.exitFullScreen(lock: false);
-      }
-    });
-  }
-
   Future<void> _initPlayer() async {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _updateBackgroundColor(widget.backgroundColor);
     });
 
+    await _configureAndroidFullscreenCallbacks();
+
     await _controller.init();
+  }
+
+  Future<void> _configureAndroidFullscreenCallbacks() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+
+    final platformController = _controller.webViewController.platform;
+    if (platformController is! AndroidWebViewController) return;
+
+    await platformController.setCustomWidgetCallbacks(
+      onShowCustomWidget: (widget, onCustomWidgetHidden) {
+        if (!mounted || _isShowingAndroidFullscreenWidget) return;
+
+        _isShowingAndroidFullscreenWidget = true;
+        _isClosingAndroidFullscreenWidget = false;
+        _controller.enterFullScreen(lock: false);
+
+        Navigator.of(context, rootNavigator: true)
+            .push(
+              MaterialPageRoute<void>(
+                fullscreenDialog: true,
+                builder: (context) {
+                  return Scaffold(
+                    backgroundColor: Colors.black,
+                    body: PopScope(
+                      canPop: true,
+                      onPopInvokedWithResult: (didPop, _) {
+                        if (didPop && !_isClosingAndroidFullscreenWidget) {
+                          _isClosingAndroidFullscreenWidget = true;
+                          onCustomWidgetHidden();
+                        }
+                      },
+                      child: SizedBox.expand(child: widget),
+                    ),
+                  );
+                },
+              ),
+            )
+            .whenComplete(() {
+              _isShowingAndroidFullscreenWidget = false;
+              _isClosingAndroidFullscreenWidget = false;
+            });
+      },
+      onHideCustomWidget: () {
+        if (
+          mounted &&
+          _isShowingAndroidFullscreenWidget &&
+          !_isClosingAndroidFullscreenWidget
+        ) {
+          _isClosingAndroidFullscreenWidget = true;
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+
+        _controller.exitFullScreen(lock: false);
+      },
+    );
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    final platformController = _controller.webViewController.platform;
+    if (platformController is AndroidWebViewController) {
+      unawaited(
+        platformController.setCustomWidgetCallbacks(
+          onShowCustomWidget: null,
+          onHideCustomWidget: null,
+        ),
+      );
+    }
+
     super.dispose();
   }
 
