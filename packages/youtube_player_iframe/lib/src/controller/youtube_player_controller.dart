@@ -600,6 +600,7 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
   /// If [lock] is true, auto rotate will be disabled.
   void enterFullScreen({bool lock = true}) {
     update(fullScreenOption: FullScreenOption(enabled: true, locked: lock));
+    unawaited(_syncFullscreenStateToHtml(true));
     _onFullscreenChanged?.call(true);
   }
 
@@ -608,6 +609,7 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
   /// If [lock] is true, auto rotate will be disabled.
   void exitFullScreen({bool lock = true}) {
     update(fullScreenOption: FullScreenOption(enabled: false, locked: lock));
+    unawaited(_syncFullscreenStateToHtml(false));
     _onFullscreenChanged?.call(false);
   }
 
@@ -633,6 +635,17 @@ class YoutubePlayerController implements YoutubePlayerIFrameAPI {
   Function(Object obj) onYoutubeTap = (obj) {};
   void setYoutubeTap(Function(Object obj) onTap) {
     onYoutubeTap = onTap;
+  }
+
+  Future<void> _syncFullscreenStateToHtml(bool enabled) async {
+    try {
+      await _eventHandler.isReady;
+      await webViewController.runJavaScript(
+        'window.syncFullscreenState && window.syncFullscreenState($enabled);',
+      );
+    } catch (_) {
+      // Ignore sync failures while the webview is transitioning or closing.
+    }
   }
 
   /// The stream for [YoutubeVideoState] changes.

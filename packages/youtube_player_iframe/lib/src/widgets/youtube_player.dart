@@ -75,12 +75,13 @@ class YoutubePlayer extends StatefulWidget {
 }
 
 class _YoutubePlayerState extends State<YoutubePlayer>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   late final YoutubePlayerController _controller;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = widget.controller;
 
     _initPlayer();
@@ -162,12 +163,34 @@ class _YoutubePlayerState extends State<YoutubePlayer>
     _controller.webViewController.setBackgroundColor(bgColor);
   }
 
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.value.fullScreenOption.enabled) return;
+
+      final orientation = MediaQuery.orientationOf(context);
+      if (orientation == Orientation.portrait) {
+        _controller.exitFullScreen(lock: false);
+      }
+    });
+  }
+
   Future<void> _initPlayer() async {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _updateBackgroundColor(widget.backgroundColor);
     });
 
     await _controller.init();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override

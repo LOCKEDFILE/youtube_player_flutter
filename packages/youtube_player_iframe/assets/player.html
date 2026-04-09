@@ -158,12 +158,26 @@
         if (lastFullscreenState === enabled) return;
 
         lastFullscreenState = enabled;
-        if (enabled) {
-          startFullscreenStateMonitor();
-        } else {
-          stopFullscreenStateMonitor();
+        if (platform != 'android') {
+          if (enabled) {
+            startFullscreenStateMonitor();
+          } else {
+            stopFullscreenStateMonitor();
+          }
         }
         sendMessage('FullscreenChanged', enabled);
+      }
+
+      function syncFullscreenState(enabled) {
+        lastFullscreenState = !!enabled;
+
+        if (platform != 'android') {
+          if (lastFullscreenState) {
+            startFullscreenStateMonitor();
+          } else {
+            stopFullscreenStateMonitor();
+          }
+        }
       }
 
       function getVideoData() {
