@@ -61,9 +61,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
-    _controller.setYoutubeTap((obj) {
-      print('???: $obj');
-    });
+
     if (widget.videoId != null) {
       _controller.loadVideoById(videoId: widget.videoId!);
     } else {
@@ -77,50 +75,55 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubePlayerScaffold(
+    return YoutubePlayerControllerProvider(
       controller: _controller,
-      builder: (context, player) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Youtube Player IFrame Demo'),
-            actions: const [VideoPlaylistIconButton()],
-          ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              if (kIsWeb && constraints.maxWidth > 750) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        children: [
-                          player,
-                          const VideoPositionIndicator(),
-                        ],
-                      ),
-                    ),
-                    const Expanded(
-                      flex: 2,
-                      child: SingleChildScrollView(
-                        child: Controls(),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return ListView(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Youtube Player IFrame Demo'),
+          actions: const [VideoPlaylistIconButton()],
+        ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            if (kIsWeb && constraints.maxWidth > 750) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  player,
-                  const VideoPositionIndicator(),
-                  const Controls(),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      children: [
+                        YoutubePlayer(
+                          controller: _controller,
+                        ),
+                        const VideoPositionIndicator(),
+                      ],
+                    ),
+                  ),
+                  const Expanded(
+                    flex: 2,
+                    child: SingleChildScrollView(
+                      child: Controls(),
+                    ),
+                  ),
                 ],
               );
-            },
-          ),
-        );
-      },
+            }
+    
+            return ListView(
+              children: [
+                Container(
+                  height: 200,
+                  child: YoutubePlayer(
+                    controller: _controller,
+                  ),
+                ),
+                const VideoPositionIndicator(),
+                const Controls(),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 

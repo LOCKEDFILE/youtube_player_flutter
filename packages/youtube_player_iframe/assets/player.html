@@ -99,6 +99,9 @@
             onAutoplayBlocked: function (event) {
               sendMessage('AutoplayBlocked', event.data);
             },
+            onFullscreenChange: function (event) {
+              sendMessage('FullscreenChange', event.data);
+            },
           },
         });
         player.setSize(window.innerWidth, window.innerHeight);
@@ -246,25 +249,58 @@
       }
 
 
+      function attachFullscreenStateListeners(ytDoc) {
+        try {
+          if (ytDoc.__ytFullscreenStateBound) return;
+          ytDoc.__ytFullscreenStateBound = true;
+
+          var emitFullscreenState = function (enabled) {
+            sendMessage('FullscreenChanged', enabled);
+          };
+
+          ytDoc.addEventListener('fullscreenchange', function () {
+            emitFullscreenState(!!ytDoc.fullscreenElement);
+          });
+
+          ytDoc.addEventListener('webkitfullscreenchange', function () {
+            emitFullscreenState(!!ytDoc.webkitFullscreenElement);
+          });
+
+          var videoElement = ytDoc.querySelector('video');
+          if (videoElement != null) {
+            videoElement.addEventListener('webkitbeginfullscreen', function () {
+              emitFullscreenState(true);
+            });
+
+            videoElement.addEventListener('webkitendfullscreen', function () {
+              emitFullscreenState(false);
+            });
+          }
+        } catch (e) {
+          // 접근 실패하면 조용히 무시
+        }
+      }
+
+
       function handleFullScreenForMobilePlatform() {
         if(platform != 'web') {
           var ytFrame = document.getElementsByTagName('iframe')[0].contentWindow.document;
-          var fsButton = ytFrame.getElementsByClassName('ytp-fullscreen-button ytp-button')[0];
           var youtubeButton = ytFrame.getElementsByClassName('ytp-youtube-button ytp-button yt-uix-sessionlink')[0];
           injectDisableClickStyle(ytFrame);
           injectHideStyle(ytFrame);
+          attachFullscreenStateListeners(ytFrame);
+
+          ytFrame.addEventListener('click', function(event) {
+            var target = event.target;
+            if (target && typeof target.closest === 'function' && target.closest('.fullscreen-icon')) {
+              sendMessage('FullscreenButtonPressed', '');
+            }
+          }, true);
           
 
     
           
           
-          if(fsButton != null) {
-            var fsButtonCopy = fsButton.cloneNode(true);
-            fsButton.replaceWith(fsButtonCopy);
-            fsButtonCopy.onclick = function() {
-              sendMessage('FullscreenButtonPressed', '');
-            };
-          }
           if (youtubeButton != null) {
             const youtubeButtonCopy = document.createElement('a');
             youtubeButtonCopy.textContent = youtubeButton.textContent;

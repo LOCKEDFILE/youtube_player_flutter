@@ -16,6 +16,7 @@ class YoutubePlayerEventHandler {
       'PlaybackQualityChange': onPlaybackQualityChange,
       'PlaybackRateChange': onPlaybackRateChange,
       'PlayerError': onError,
+      'FullscreenChanged': onFullscreenChanged,
       'FullscreenButtonPressed': onFullscreenButtonPressed,
       'VideoState': onVideoState,
       'AutoplayBlocked': onAutoplayBlocked,
@@ -115,6 +116,20 @@ class YoutubePlayerEventHandler {
   /// This event is fired to indicate that the fullscreen button was clicked.
   void onFullscreenButtonPressed(Object data) {
     controller.toggleFullScreen();
+  }
+
+  /// This event is fired when the iframe/video reports fullscreen state changes.
+  void onFullscreenChanged(Object data) {
+    final enabled = data == true || data.toString() == 'true';
+    final current = controller.value.fullScreenOption.enabled;
+
+    if (enabled == current) return;
+
+    if (enabled) {
+      controller.enterFullScreen();
+    } else {
+      controller.exitFullScreen();
+    }
   }
 
   void onVideoSize(Object data) {
